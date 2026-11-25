@@ -1,0 +1,60 @@
+{
+  "name": "forge-yourself-by-typescript",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TypeScript backend engineering learning project: Repository Provisioning Service",
+  "type": "module",
+  "engines": {
+    "node": ">=24.19.0 <25"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "better-sqlite3": "^13.2.0",
+    "fastify": "^5.12.8",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.1.1",
+    "eslint": "^10.15.0",
+    "fast-check": "^4.11.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.74.0",
+    "vitest": "^5.1.1",
+    "yaml": "^2.9.1"
+  },
+  "scripts": {
+    "dev": "tsx watch reference/src/main.ts",
+    "start": "tsx reference/src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start:prod": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.starter.json",
+    "lint": "eslint . --quiet",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:live": "vitest run --config vitest.live.config.ts",
+    "exercise": "node scripts/exercise.mjs",
+    "exercise:verify": "TARGET=reference vitest run --config vitest.exercise.config.ts",
+    "test:starter": "vitest run --config vitest.starter.config.ts",
+    "starter:generate": "node scripts/generate-starter.mjs",
+    "starter:check": "node scripts/generate-starter.mjs --check",
+    "docs:openapi": "tsx scripts/generate-openapi.ts",
+    "check:workflows": "node scripts/check-workflows.mjs",
+    "check:secrets": "node scripts/scan-secrets.mjs",
+    "audit": "npm audit --omit=dev --audit-level=high",
+    "lab:start": "node scripts/lab.mjs start",
+    "lab:test": "node scripts/lab.mjs test",
+    "lab:verify": "node scripts/lab.mjs verify",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run starter:check && npm run exercise:verify && npm run check:workflows && npm run check:secrets && npm run lab:verify && npm run audit"
+  }
+}

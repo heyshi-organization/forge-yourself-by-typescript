@@ -1,0 +1,65 @@
+{
+  "target": "reference/src/async/retry.ts",
+  "mutants": [
+    {
+      "name": "off-by-one-attempts",
+      "hint": "最大試行回数ちょうどで止まること(maxAttempts=3なら関数は3回呼ばれる)を確認していますか?",
+      "find": "if (attempt >= policy.maxAttempts) throw",
+      "replace": "if (attempt > policy.maxAttempts) throw"
+    },
+    {
+      "name": "no-exponential-growth",
+      "hint": "失敗回数が増えるほど待ち時間の上限が2倍ずつ増えること(computeBackoffMs)を確認していますか?",
+      "find": "policy.baseDelayMs * 2 ** (failedAttempt - 1)",
+      "replace": "policy.baseDelayMs"
+    },
+    {
+      "name": "no-max-delay-cap",
+      "hint": "待ち時間が maxDelayMs で頭打ちになること(試行番号が大きい場合)を確認していますか?",
+      "find": "Math.min(policy.maxDelayMs, policy.baseDelayMs * 2 ** (failedAttempt - 1))",
+      "replace": "policy.baseDelayMs * 2 ** (failedAttempt - 1)"
+    },
+    {
+      "name": "no-jitter",
+      "hint": "乱数(random)の値で待ち時間が変わること(random=0 なら 0ms)を確認していますか?",
+      "find": "Math.floor(random() * ceiling)",
+      "replace": "ceiling"
+    },
+    {
+      "name": "retries-non-retryable-errors",
+      "hint": "isRetryable が false のエラーでは再試行せず、1回で終わることを確認していますか?",
+      "find": "if (!isRetryable(error)) throw error;",
+      "replace": ""
+    },
+    {
+      "name": "wraps-non-retryable-errors",
+      "hint": "再試行できないエラーは RetryExhaustedError にせず、元のエラーそのものが投げられることを確認していますか?",
+      "find": "if (!isRetryable(error)) throw error;",
+      "replace": "if (!isRetryable(error)) throw new RetryExhaustedError(attempt, error);"
+    },
+    {
+      "name": "loses-last-error",
+      "hint": "RetryExhaustedError の lastError に「最後の」エラーが入ることを確認していますか?",
+      "find": "throw new RetryExhaustedError(attempt, error);\n",
+      "replace": "throw new RetryExhaustedError(attempt, new Error('retry failed'));\n"
+    },
+    {
+      "name": "ignores-delay-hint",
+      "hint": "Retry-After のようなヒントがあれば、バックオフではなくヒントの時間だけ待つことを確認していますか?",
+      "find": "const delayMs = hint ?? computeBackoffMs(attempt, policy, random);",
+      "replace": "const delayMs = computeBackoffMs(attempt, policy, random);"
+    },
+    {
+      "name": "waits-too-long-for-hint",
+      "hint": "ヒントの待ち時間が maxDelayMs を超える場合は、待たずに元のエラーを投げることを確認していますか?",
+      "find": "if (delayMs > policy.maxDelayMs) throw error;",
+      "replace": ""
+    },
+    {
+      "name": "no-onretry-callback",
+      "hint": "再試行のたびに onRetry が(試行番号・待ち時間・エラーつきで)呼ばれることを確認していますか?",
+      "find": "options.onRetry?.({ attempt, delayMs, error });",
+      "replace": ""
+    }
+  ]
+}

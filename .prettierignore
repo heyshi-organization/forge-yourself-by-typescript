@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+package-lock.json
+lab-workspace
+.lab-work
+data
+security-labs/**/*.txt
+
+# ユーザーが書いた指示書は整形しない / Markdownは手書きの表を保つため整形対象外
+PROJECT_INSTRUCTIONS.md
+*.md

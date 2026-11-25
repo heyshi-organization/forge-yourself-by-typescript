@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "paths": { "@app/*": ["./starter/src/*"], "@test/*": ["./test-support/*"] }
+  },
+  "include": ["starter/**/*.ts"]
+}

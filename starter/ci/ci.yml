@@ -1,0 +1,25 @@
+# 課題12: 自分の CI ワークフローを完成させてください(docs/exercises/12-ci-cd.md)。
+# 検査: npm run exercise -- 12
+#
+# この雛形は、わざと「危険・不十分」な状態です。検査の出力を見て、1つずつ直してください。
+# TODO(ex12): 下の問題をすべて直す
+#   - permissions(最小権限)
+#   - Action の SHA 固定(40桁のコミットSHA。自分で gh api で調べる)
+#   - checkout の persist-credentials: false
+#   - timeout-minutes
+#   - 品質ステップ: lint / フォーマット検査 / 型検査 / テスト / npm audit(本番依存の High 以上)
+name: Learner CI
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci
+      # TODO(ex12): lint / format:check / typecheck / test / audit のステップを追加する

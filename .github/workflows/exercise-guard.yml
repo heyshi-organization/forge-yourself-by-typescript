@@ -1,0 +1,40 @@
+name: Exercise Guard
+
+# 演習用の脆弱なコード(exercise/* ブランチ・lab-workspace/)が main にマージされないようにする。
+# exercise/* ブランチの PR は、CodeQL の結果を見るための「ドラフトPR」として使い、マージしない。
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+jobs:
+  guard:
+    name: 演習コードを main に入れない
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: exercise/* ブランチはマージ禁止
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            exercise/*)
+              echo "::error::exercise/* ブランチは演習用です。CodeQL等の結果を確認したら、PRを閉じてブランチを削除してください(マージしない)。"
+              exit 1
+              ;;
+          esac
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: lab-workspace/ を含まない
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if git diff --name-only "$BASE_SHA"...HEAD | grep -E '^lab-workspace/'; then
+            echo "::error::lab-workspace/ は意図的に脆弱な演習コードの置き場所です。マージできません。"
+            exit 1
+          fi

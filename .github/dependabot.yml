@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # アプリケーションの依存(npm)
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # 開発用ツールの更新は1つのPRにまとめて、レビューの手間を減らす
+    groups:
+      dev-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+    # 公開直後のバージョンは避ける(悪意あるリリースへの対策)
+    cooldown:
+      default-days: 3
+    labels: [dependencies]
+
+  # GitHub Actions 自体の依存(SHA固定したものも更新してくれる)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns: ['*']
+    cooldown:
+      default-days: 3
+    labels: [dependencies, github-actions]

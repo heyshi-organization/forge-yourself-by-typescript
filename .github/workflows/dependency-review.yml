@@ -1,0 +1,25 @@
+name: Dependency Review
+
+# PR で追加・更新される依存パッケージの脆弱性とライセンスを検査する(SCA)。
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  dependency-review:
+    name: 依存関係レビュー
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
+        with:
+          # High 以上の脆弱性を含む依存を追加・更新する PR を失敗させる
+          fail-on-severity: high
+          # 本番(runtime)で使う依存を対象にする。開発依存は参考情報に留める
+          fail-on-scopes: runtime
