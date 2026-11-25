@@ -20,6 +20,7 @@
 | Dependabot version updates                                     | —                                   | `.github/dependabot.yml` で設定                          | 設定ファイルによる(上のAPI設定とは別)                                                            |
 | Secret scanning: non-provider patterns                         | `disabled`                          | `disabled`(利用しない)                                   | 追加のパターン検出。**有料プラン(GitHub Secret Protection)の機能**と理解している ※要確認         |
 | Secret scanning: validity checks                               | `disabled`                          | `disabled`(利用しない)                                   | トークンが有効かの検証。同上                                                                     |
+| Dependency graph / Dependency Review | SBOM API が 404、Dependency Review が `Forbidden` で失敗 | **未解決**(APIでは有効化できなかった) | 事実と推測を分けて [github-settings.md の 1-2](../github-settings.md) に記録 |
 | Code scanning(CodeQL)                                          | default setup は `not-configured`   | **advanced setup**(`.github/workflows/codeql.yml`)を採用 | default setup は設定が自動で、ワークフローとして見えない。学習用に中身を見える advanced を選んだ |
 
 「対応後」は、`gh api -X PATCH` で有効化したあと、**再度 GET して `enabled` になっていることを確認**した(設定だけ書いて終わりにしていない)。

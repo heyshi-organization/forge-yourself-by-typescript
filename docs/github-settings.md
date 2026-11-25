@@ -25,6 +25,19 @@ gh api -X PUT repos/<owner>/<repo>/vulnerability-alerts    # Dependabot alerts �
 
 (自分の fork / コピーでは、自分で上記を実行してください。設定はリポジトリごとです)
 
+### 1-2. Dependency graph(Dependency Review の前提)— 未解決の事項
+
+| 観測(2026-11-25) | 内容 |
+|---|---|
+| 事実 | PR #1 で `Dependency Review` が `Forbidden`(`.../dependency-graph/compare` の 403)で失敗した |
+| 事実 | `GET /repos/<owner>/<repo>/dependency-graph/sbom` が 404(Dependency graph のデータが無い/無効) |
+| 事実 | `PATCH` で `security_and_analysis.dependency_graph.status = enabled` を送っても、200 は返るが SBOM は 404 のまま(API では有効化できなかった) |
+| 事実 | 組織の `dependency_graph_enabled_for_new_repositories` は `false`(組織プラン free) |
+| **推測(未確認)** | Dependency graph は**デフォルトブランチ**のマニフェスト(`package-lock.json`)から作られる。`main` にまだマニフェストが無い(最初のPRがマージされていない)ため、**初回のPRだけ**失敗している可能性が高い |
+
+**対応(利用者が行う)**: ① 設定画面 *Settings → Advanced Security(Code security)→ Dependency graph* が有効か確認し、無効なら有効化する。② PR #1 を `main` にマージした後、次のPRで `Dependency Review` が通るかを確認する(`gh api repos/<owner>/<repo>/dependency-graph/sbom` が 200 になるのが目安)。③ 通るようになるまで、`Dependency Review` は**必須のステータスチェックに入れない**(入れると、すべてのPRが止まる)。
+この状態を「完了」扱いにしていない(→ 最終報告の未解決事項)。
+
 ## 2. 手動で設定する(未設定)
 
 > ブランチ保護は、リポジトリの運用ルールを変える設定のため、**自動では変更していません**。
