@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "paths": { "@app/*": ["./reference/src/*"] }
+  },
+  "include": ["reference/**/*.ts", "exercises/**/*.ts", "scripts/**/*.ts", "vitest*.ts"]
+}

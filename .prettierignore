@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+package-lock.json
+lab-workspace
+.lab-work
+data
+security-labs/**/*.txt

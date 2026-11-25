@@ -1,0 +1,587 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Repository Provisioning Service",
+    "version": "1.0.0",
+    "description": "GitHubリポジトリの作成要求を受け付け、結果を保存・参照するローカル用API。"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:3000"
+    }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "summary": "ヘルスチェック",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "ok"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/repository-requests": {
+      "post": {
+        "summary": "リポジトリ作成要求を送る(冪等)",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "description": "8〜128文字の英数字・ - _ 。同じキーでの再送は、前回の結果を返す(再実行しない)。",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{8,128}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRepositoryBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "同じ Idempotency-Key の過去の結果(Idempotent-Replayed: true)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestResource"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "作成した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "入力値が不正 / Idempotency-Key が無い・不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "同名リポジトリが存在 / 同じ要求を処理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "リクエストが大きすぎる",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type が application/json ではない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "同じキーで内容が違う / GitHubが内容を拒否 / owner不一致",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部エラー",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "GitHubの認証・権限の問題(サービス管理者の対応が必要)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "GitHubのレート制限・一時障害",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "GitHubがタイムアウト",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "作成要求の一覧",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PENDING",
+                "PROCESSING",
+                "SUCCEEDED",
+                "FAILED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "クエリが不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/repository-requests/{id}": {
+      "get": {
+        "summary": "作成要求の詳細(処理状態・作成結果)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestResource"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "存在しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateRepositoryBody": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 39,
+            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$"
+          },
+          "ownerType": {
+            "type": "string",
+            "enum": [
+              "user",
+              "organization"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[A-Za-z0-9._-]+$"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 350
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "autoInit": {
+            "default": false,
+            "type": "boolean"
+          },
+          "topics": {
+            "default": [],
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,49}$"
+            }
+          }
+        },
+        "required": [
+          "owner",
+          "ownerType",
+          "name",
+          "visibility"
+        ],
+        "additionalProperties": false
+      },
+      "RequestResource": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "spec",
+          "repository",
+          "warnings",
+          "error",
+          "createdAt",
+          "updatedAt",
+          "startedAt",
+          "finishedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "PROCESSING",
+              "SUCCEEDED",
+              "FAILED"
+            ]
+          },
+          "spec": {
+            "type": "object",
+            "properties": {
+              "owner": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 39,
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$"
+              },
+              "ownerType": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "organization"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "pattern": "^[A-Za-z0-9._-]+$"
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 350
+              },
+              "visibility": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "private"
+                ]
+              },
+              "autoInit": {
+                "default": false,
+                "type": "boolean"
+              },
+              "topics": {
+                "default": [],
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,49}$"
+                }
+              }
+            },
+            "required": [
+              "owner",
+              "ownerType",
+              "name",
+              "visibility"
+            ],
+            "additionalProperties": false
+          },
+          "repository": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "id",
+                  "fullName",
+                  "htmlUrl"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "fullName": {
+                    "type": "string"
+                  },
+                  "htmlUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                }
+              }
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "RequestList": {
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequestResource"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          }
+        }
+      },
+      "ErrorBody": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "correlationId"
+            ],
+            "properties": {
+              "code": {
+                "enum": [
+                  "VALIDATION_ERROR",
+                  "IDEMPOTENCY_KEY_REQUIRED",
+                  "IDEMPOTENCY_KEY_INVALID",
+                  "NOT_FOUND",
+                  "UNSUPPORTED_MEDIA_TYPE",
+                  "PAYLOAD_TOO_LARGE",
+                  "IDEMPOTENCY_KEY_REUSED",
+                  "OWNER_MISMATCH",
+                  "REQUEST_IN_PROGRESS",
+                  "REPOSITORY_REQUEST_IN_PROGRESS",
+                  "REPOSITORY_ALREADY_EXISTS",
+                  "GITHUB_AUTH_FAILED",
+                  "GITHUB_PERMISSION_DENIED",
+                  "GITHUB_RATE_LIMITED",
+                  "GITHUB_UNAVAILABLE",
+                  "GITHUB_TIMEOUT",
+                  "GITHUB_REJECTED",
+                  "INTERRUPTED",
+                  "INTERNAL_ERROR"
+                ]
+              },
+              "message": {
+                "type": "string"
+              },
+              "correlationId": {
+                "type": "string"
+              },
+              "requestId": {
+                "type": "string"
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "path",
+                    "message"
+                  ],
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

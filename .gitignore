@@ -155,3 +155,16 @@ vite.config.ts.timestamp-*
 .nx/cache
 .nx/workspace-data
 .nx/migrate-runs
+
+# --- project specific ---
+.env
+.env.*
+!.env.example
+data/
+dist/
+lab-workspace/
+.lab-work/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.DS_Store
