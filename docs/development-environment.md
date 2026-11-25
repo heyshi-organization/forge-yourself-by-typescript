@@ -64,6 +64,9 @@ curl -s -X POST localhost:3000/v1/repository-requests -H 'Content-Type: applicat
 # .env を編集
 GITHUB_CLIENT=octokit
 GITHUB_TOKEN=<fine-grained PAT>      # .env は Git に入らない。絶対にコミットしない
+# 必要な権限(組織にリポジトリを作る場合): Repository の Administration(write) または Repository creation(write)。
+# 根拠(検索結果の要約ベース): https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens
+# 実際に動くかは、検証用 Owner で試すまで確認できない(ライブテスト未実施)
 ```
 
 ## 4. 学習用コード(starter)を動かす

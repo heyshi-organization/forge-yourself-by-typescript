@@ -25,18 +25,17 @@ gh api -X PUT repos/<owner>/<repo>/vulnerability-alerts    # Dependabot alerts �
 
 (自分の fork / コピーでは、自分で上記を実行してください。設定はリポジトリごとです)
 
-### 1-2. Dependency graph(Dependency Review の前提)— 未解決の事項
+### 1-2. Dependency graph(Dependency Review の前提)— 解決済み(2026-11-25)
 
-| 観測(2026-11-25) | 内容 |
+| 観測 | 内容 |
 |---|---|
-| 事実 | PR #1 で `Dependency Review` が `Forbidden`(`.../dependency-graph/compare` の 403)で失敗した |
-| 事実 | `GET /repos/<owner>/<repo>/dependency-graph/sbom` が 404(Dependency graph のデータが無い/無効) |
-| 事実 | `PATCH` で `security_and_analysis.dependency_graph.status = enabled` を送っても、200 は返るが SBOM は 404 のまま(API では有効化できなかった) |
-| 事実 | 組織の `dependency_graph_enabled_for_new_repositories` は `false`(組織プラン free) |
-| **推測(未確認)** | Dependency graph は**デフォルトブランチ**のマニフェスト(`package-lock.json`)から作られる。`main` にまだマニフェストが無い(最初のPRがマージされていない)ため、**初回のPRだけ**失敗している可能性が高い |
+| 事実 | 初回、PR #1 で `Dependency Review` が `Forbidden`(`.../dependency-graph/compare` の 403)で失敗した |
+| 事実 | そのとき `GET /repos/<owner>/<repo>/dependency-graph/sbom` は 404 だった。`PATCH` で `dependency_graph.status = enabled` を送っても 200 は返るが SBOM は 404 のまま(API では有効化できなかった) |
+| 事実 | 利用者が設定画面(Settings → Advanced Security → Dependency graph)で有効化した後、SBOM API が **200** になり、失敗していた run を再実行したら `Dependency Review` が**成功**した |
+| 事実 | 原因は「Dependency graph が無効だったこと」。当初の推測(`main` にマニフェストが無い)は**外れ**だった。`main` へのマージ前でも、グラフを有効にすれば PR のレビューは通る |
 
-**対応(利用者が行う)**: ① 設定画面 *Settings → Advanced Security(Code security)→ Dependency graph* が有効か確認し、無効なら有効化する。② PR #1 を `main` にマージした後、次のPRで `Dependency Review` が通るかを確認する(`gh api repos/<owner>/<repo>/dependency-graph/sbom` が 200 になるのが目安)。③ 通るようになるまで、`Dependency Review` は**必須のステータスチェックに入れない**(入れると、すべてのPRが止まる)。
-この状態を「完了」扱いにしていない(→ 最終報告の未解決事項)。
+**自分の fork / コピーで使うとき**: 設定画面で Dependency graph を有効にしてください(API の `PATCH` では効きませんでした)。確認は `gh api repos/<owner>/<repo>/dependency-graph/sbom` が 200 になること。有効化してから動かない場合は、失敗した run を再実行します。
+`Dependency Review` は通ることを確認できたので、`main` のブランチ保護(2-1)の必須チェックに入れてよい。
 
 ## 2. 手動で設定する(未設定)
 

@@ -20,7 +20,7 @@
 | Dependabot version updates                                     | —                                   | `.github/dependabot.yml` で設定                          | 設定ファイルによる(上のAPI設定とは別)                                                            |
 | Secret scanning: non-provider patterns                         | `disabled`                          | `disabled`(利用しない)                                   | 追加のパターン検出。**有料プラン(GitHub Secret Protection)の機能**と理解している ※要確認         |
 | Secret scanning: validity checks                               | `disabled`                          | `disabled`(利用しない)                                   | トークンが有効かの検証。同上                                                                     |
-| Dependency graph / Dependency Review | SBOM API が 404、Dependency Review が `Forbidden` で失敗 | **未解決**(APIでは有効化できなかった) | 事実と推測を分けて [github-settings.md の 1-2](../github-settings.md) に記録 |
+| Dependency graph / Dependency Review | SBOM API が 404、Dependency Review が `Forbidden` で失敗 | **`enabled`**(設定画面で有効化。APIの PATCH では効かなかった) | 有効化後に SBOM が 200、Dependency Review の再実行が成功。経緯は [github-settings.md の 1-2](../github-settings.md) |
 | Code scanning(CodeQL)                                          | default setup は `not-configured`   | **advanced setup**(`.github/workflows/codeql.yml`)を採用 | default setup は設定が自動で、ワークフローとして見えない。学習用に中身を見える advanced を選んだ |
 
 「対応後」は、`gh api -X PATCH` で有効化したあと、**再度 GET して `enabled` になっていることを確認**した(設定だけ書いて終わりにしていない)。
@@ -28,7 +28,8 @@
 ## 事実と推測
 
 - 事実: 上表の「調査時点」「対応後」は API の実測値
-- 推測(未確認): non-provider patterns / validity checks が有料機能であること。プランの案内(GitHub Docs)で確認していない
+- 事実(検索結果の要約ベース。原文は未精読): validity checks は GitHub Team / Enterprise で GitHub Secret Protection を有効にした場合の機能([Enabling validity checks](https://docs.github.com/en/code-security/secret-scanning/enabling-secret-scanning-features/enabling-validity-checks-for-your-repository)、[Supported patterns](https://docs.github.com/en/code-security/reference/secret-security/supported-secret-scanning-patterns))
+- 推測(未確認): non-provider patterns が有料機能であること。公式の記述を確認できていない。public リポジトリでの提供有無も確認できない
 - 確認できていないこと: 実際にシークレットを push してブロックされる様子(**実在トークンの使用は禁止**のため行っていない。フォーマットだけ似せたダミーでの検証は、誤検知・誤ブロックの恐れがあり、リポジトリ履歴を汚すので行わない)
 
 ## 代替・補助
