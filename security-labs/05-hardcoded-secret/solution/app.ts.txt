@@ -1,0 +1,29 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import Fastify from 'fastify';
+
+export function buildLabApp(env: Record<string, string | undefined> = process.env) {
+  // 対策: 秘密は環境変数から受け取る。無ければ「起動しない」(弱い既定値で動かさない)
+  const signingKey = env.SIGNING_KEY;
+  const adminPassword = env.ADMIN_PASSWORD;
+  if (!signingKey || signingKey.length < 32) throw new Error('SIGNING_KEY(32文字以上)が必要です');
+  if (!adminPassword || adminPassword.length < 16) throw new Error('ADMIN_PASSWORD(16文字以上)が必要です');
+
+  const app = Fastify();
+
+  app.get('/token', async (req) => {
+    const { user } = req.query as { user: string };
+    const signature = createHmac('sha256', signingKey).update(user).digest('hex');
+    return { token: `${user}.${signature}` };
+  });
+
+  app.get('/admin', async (req, reply) => {
+    const { password } = req.query as { password?: string };
+    // 対策: 比較は一定時間で行う(タイミング攻撃対策)
+    const a = Buffer.from(password ?? '');
+    const b = Buffer.from(adminPassword);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return reply.status(401).send({ error: 'unauthorized' });
+    return { ok: true };
+  });
+
+  return app;
+}

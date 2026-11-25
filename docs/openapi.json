@@ -26,9 +26,7 @@
                       "const": "ok"
                     }
                   },
-                  "required": [
-                    "status"
-                  ]
+                  "required": ["status"]
                 }
               }
             }
@@ -200,12 +198,7 @@
             "name": "status",
             "in": "query",
             "schema": {
-              "enum": [
-                "PENDING",
-                "PROCESSING",
-                "SUCCEEDED",
-                "FAILED"
-              ]
+              "enum": ["PENDING", "PROCESSING", "SUCCEEDED", "FAILED"]
             }
           }
         ],
@@ -284,10 +277,7 @@
           },
           "ownerType": {
             "type": "string",
-            "enum": [
-              "user",
-              "organization"
-            ]
+            "enum": ["user", "organization"]
           },
           "name": {
             "type": "string",
@@ -301,10 +291,7 @@
           },
           "visibility": {
             "type": "string",
-            "enum": [
-              "public",
-              "private"
-            ]
+            "enum": ["public", "private"]
           },
           "autoInit": {
             "default": false,
@@ -320,12 +307,7 @@
             }
           }
         },
-        "required": [
-          "owner",
-          "ownerType",
-          "name",
-          "visibility"
-        ],
+        "required": ["owner", "ownerType", "name", "visibility"],
         "additionalProperties": false
       },
       "RequestResource": {
@@ -347,12 +329,7 @@
             "type": "string"
           },
           "status": {
-            "enum": [
-              "PENDING",
-              "PROCESSING",
-              "SUCCEEDED",
-              "FAILED"
-            ]
+            "enum": ["PENDING", "PROCESSING", "SUCCEEDED", "FAILED"]
           },
           "spec": {
             "type": "object",
@@ -365,10 +342,7 @@
               },
               "ownerType": {
                 "type": "string",
-                "enum": [
-                  "user",
-                  "organization"
-                ]
+                "enum": ["user", "organization"]
               },
               "name": {
                 "type": "string",
@@ -382,10 +356,7 @@
               },
               "visibility": {
                 "type": "string",
-                "enum": [
-                  "public",
-                  "private"
-                ]
+                "enum": ["public", "private"]
               },
               "autoInit": {
                 "default": false,
@@ -401,12 +372,7 @@
                 }
               }
             },
-            "required": [
-              "owner",
-              "ownerType",
-              "name",
-              "visibility"
-            ],
+            "required": ["owner", "ownerType", "name", "visibility"],
             "additionalProperties": false
           },
           "repository": {
@@ -416,11 +382,7 @@
               },
               {
                 "type": "object",
-                "required": [
-                  "id",
-                  "fullName",
-                  "htmlUrl"
-                ],
+                "required": ["id", "fullName", "htmlUrl"],
                 "properties": {
                   "id": {
                     "type": "integer"
@@ -449,10 +411,7 @@
               },
               {
                 "type": "object",
-                "required": [
-                  "code",
-                  "message"
-                ],
+                "required": ["code", "message"],
                 "properties": {
                   "code": {
                     "type": "string"
@@ -473,29 +432,18 @@
             "format": "date-time"
           },
           "startedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "finishedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           }
         }
       },
       "RequestList": {
         "type": "object",
-        "required": [
-          "items",
-          "total",
-          "limit",
-          "offset"
-        ],
+        "required": ["items", "total", "limit", "offset"],
         "properties": {
           "items": {
             "type": "array",
@@ -516,17 +464,11 @@
       },
       "ErrorBody": {
         "type": "object",
-        "required": [
-          "error"
-        ],
+        "required": ["error"],
         "properties": {
           "error": {
             "type": "object",
-            "required": [
-              "code",
-              "message",
-              "correlationId"
-            ],
+            "required": ["code", "message", "correlationId"],
             "properties": {
               "code": {
                 "enum": [
@@ -564,10 +506,7 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "required": [
-                    "path",
-                    "message"
-                  ],
+                  "required": ["path", "message"],
                   "properties": {
                     "path": {
                       "type": "string"

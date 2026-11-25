@@ -81,6 +81,11 @@ export function toRequestResource(request: RepositoryRequest): RequestResource {
         finishedAt: request.finishedAt,
       };
     default:
+      // @starter-begin ex01
       return assertNever(request);
+    // @starter-else
+    //|       // TODO(ex01): RepositoryRequest を正しい判別可能Unionで定義できたら、`as never` を外してもコンパイルが通るはず
+    //|       return assertNever(request as never);
+    // @starter-end
   }
 }

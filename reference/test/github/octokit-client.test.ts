@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GitHubApiError } from '@app/github/errors.js';
 import { OctokitGitHubClient } from '@app/github/octokit-client.js';
-import { makeSpec } from '../helpers.js';
+import { makeSpec } from '@test/helpers.js';
 
 interface Recorded {
   url: string;

@@ -87,7 +87,7 @@ export async function retry<T>(
 //|   throw new NotImplementedError('03');
 //| }
 //|
-//| // TODO(ex03): リトライ処理を実装する(仕様は上のコメントではなく docs/exercises/03-async-await.md を参照)
+//| // TODO(ex03): リトライ処理を実装する(仕様は docs/exercises/03-async-await.md を参照)
 //| export async function retry<T>(
 //|   _fn: (attempt: number) => Promise<T>,
 //|   _options: RetryOptions,

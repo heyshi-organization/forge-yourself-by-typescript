@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RepositoryRequest } from '@app/domain/request.js';
 import { toRequestResource } from '@app/http/resource.js';
-import { makeSpec } from '../helpers.js';
+import { makeSpec } from '@test/helpers.js';
 
 const base = {
   id: 'r1',

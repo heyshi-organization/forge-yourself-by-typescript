@@ -1,0 +1,23 @@
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import Fastify from 'fastify';
+
+const execFileAsync = promisify(execFile);
+const REPO_NAME = /^[A-Za-z0-9._-]{1,100}$/;
+
+export function buildLabApp() {
+  const app = Fastify();
+
+  app.get('/repo-info', async (req, reply) => {
+    const { name } = req.query as { name?: unknown };
+    // 対策1: 入力を許可リスト形式で検証する
+    if (typeof name !== 'string' || !REPO_NAME.test(name) || name === '.' || name === '..') {
+      return reply.status(400).send({ error: 'invalid name' });
+    }
+    // 対策2: シェルを介さない execFile で、引数を配列として渡す(; や && は単なる文字になる)
+    const { stdout } = await execFileAsync('echo', ['repository:', name]);
+    return { output: stdout };
+  });
+
+  return app;
+}

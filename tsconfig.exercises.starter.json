@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.starter.json",
+  "include": ["starter/**/*.ts", "exercises/**/*.ts", "test-support/**/*.ts"]
+}

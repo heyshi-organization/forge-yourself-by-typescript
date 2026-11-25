@@ -3,9 +3,18 @@ import { defineConfig } from 'vitest/config';
 
 // 完成形(reference)のテスト。ネットワーク接続・認証情報なしで実行できる。
 export default defineConfig({
-  resolve: { alias: { '@app': fileURLToPath(new URL('./reference/src', import.meta.url)) } },
+  resolve: {
+    alias: {
+      '@app': fileURLToPath(new URL('./reference/src', import.meta.url)),
+      '@test': fileURLToPath(new URL('./test-support', import.meta.url)),
+    },
+  },
   test: {
-    include: ['reference/test/**/*.test.ts', 'scripts/test/**/*.test.ts'],
+    include: [
+      'reference/test/**/*.test.ts',
+      'exercises/tests/**/*.test.ts',
+      'scripts/test/**/*.test.ts',
+    ],
     environment: 'node',
     coverage: {
       provider: 'v8',

@@ -1,0 +1,23 @@
+import Database from 'better-sqlite3';
+import Fastify from 'fastify';
+import { z } from 'zod';
+
+const querySchema = z.object({ status: z.enum(['PENDING', 'PROCESSING', 'SUCCEEDED', 'FAILED']) }).strict();
+
+export function buildLabApp(db: Database.Database) {
+  const app = Fastify();
+
+  app.get('/requests', async (req, reply) => {
+    // 対策1: 入力を許可リスト(enum)で検証する
+    const parsed = querySchema.safeParse(req.query);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid status' });
+
+    // 対策2: 値はバインド変数(?)で渡す。SQLの構造とデータを混ぜない
+    const rows = db
+      .prepare('SELECT id, status, owner FROM requests WHERE status = ?')
+      .all(parsed.data.status);
+    return { items: rows };
+  });
+
+  return app;
+}

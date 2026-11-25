@@ -53,6 +53,16 @@ export function classifyGitHubError(error: unknown, now: Date = new Date()): Git
     return new GitHubApiError('unknown', '不明なエラー', { cause: error });
   }
 
+  // Octokit は AbortError に status=500 を付けて再throwする(RequestError には包まない)。
+  // status で分類する前に、名前で「中断」を判定する。
+  if (error.name === 'AbortError') {
+    return new GitHubApiError(
+      'timeout',
+      typeof error.message === 'string' ? error.message : 'aborted',
+      { cause: error },
+    );
+  }
+
   const e = error as HttpErrorLike;
   const message = typeof e.message === 'string' ? e.message : 'GitHub API error';
   const status = typeof e.status === 'number' ? e.status : undefined;
@@ -60,7 +70,7 @@ export function classifyGitHubError(error: unknown, now: Date = new Date()): Git
 
   if (status === undefined) {
     // HTTPレスポンスが無い = 接続エラー、または中断
-    return new GitHubApiError(error.name === 'AbortError' ? 'timeout' : 'network', message, base);
+    return new GitHubApiError('network', message, base);
   }
   if (status === 401) return new GitHubApiError('auth', message, base);
 

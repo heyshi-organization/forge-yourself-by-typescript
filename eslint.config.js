@@ -19,9 +19,8 @@ export default tseslint.config(
     languageOptions: {
       globals: { ...globals.node },
       parserOptions: {
-        projectService: {
-          allowDefaultProject: ['*.js', 'scripts/*.mjs'],
-        },
+        // reference用と starter用で tsconfig が別。どちらかに含まれるファイルを型情報つきでlintする
+        project: ['./tsconfig.json', './tsconfig.starter.json'],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -55,6 +54,14 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-explicit-any': 'off',
+      // 「型を書いていない」暫定の any 由来の指摘は、型を書けば消えるので警告にとどめる
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-redundant-type-constituents': 'warn',
+      '@typescript-eslint/consistent-type-imports': 'warn',
     },
   },
 );

@@ -1,0 +1,116 @@
+name: CI
+
+# Pull Request と main への push で、品質を自動検証する。
+# このワークフローの失敗は PR の品質ゲートとして扱う(docs/security-design.md 参照)。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# トップレベルは権限なし。必要な権限は各 job に最小限で付ける。
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: 品質検査(型・lint・フォーマット・テスト)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      # --ignore-scripts: 依存パッケージの install script を実行しない(サプライチェーン攻撃対策)
+      - run: npm ci --ignore-scripts
+      - name: Type Check(reference / starter)
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+      - name: Prettier Check
+        run: npm run format:check
+      - name: テスト + カバレッジ(ユニット・統合。ネットワーク不要)
+        run: npm run test:coverage
+      - name: 課題の受け入れテストが完成形で通ること
+        run: npm run exercise:verify
+      - name: ミューテーション検査の健全性(完成形のテストが全ミュータントを検出できること)
+        run: node scripts/check-mutants.mjs --self-test
+      - name: セキュリティ演習の健全性(脆弱版で攻撃テストが失敗し、修正版で成功すること)
+        run: npm run lab:verify
+      - name: ワークフローの静的検査(権限・SHA固定・インジェクション)
+        run: npm run check:workflows
+      - name: 秘密情報・個人情報の混入検査
+        run: npm run check:secrets
+      - name: ビルド
+        run: npm run build
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  audit:
+    name: 依存関係の脆弱性検査(npm audit)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      # 品質ゲート: 本番依存の High 以上の脆弱性があれば失敗する
+      - name: 本番依存に High 以上の脆弱性がないこと
+        run: npm audit --omit=dev --audit-level=high
+      # 参考情報: 開発依存を含む Moderate 以上。失敗させず、結果をサマリに出す
+      - name: 開発依存を含む全体の状況(参考・失敗させない)
+        continue-on-error: true
+        run: |
+          {
+            echo '### npm audit (開発依存を含む / moderate 以上)'
+            echo '```'
+            npm audit --audit-level=moderate || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # 学習者向けの参考情報。starter は最初は未実装なので、失敗しても CI 全体は失敗させない。
+  starter-progress:
+    name: 課題の進捗(参考情報)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: 進捗をサマリに出す
+        run: |
+          {
+            echo '### 課題の進捗(starter の実装を検査)'
+            echo '```'
+            npm run --silent exercise
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

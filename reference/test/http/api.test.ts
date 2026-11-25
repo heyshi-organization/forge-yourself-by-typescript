@@ -4,8 +4,8 @@ import { hashSpec } from '@app/domain/request-hash.js';
 import { FakeGitHubClient } from '@app/github/fake-github-client.js';
 import { createRepositoryBodySchema, toRepositorySpec } from '@app/schemas/repository.js';
 import { ERROR_CATALOG } from '@app/errors/catalog.js';
-import { FAKE_PAT, createTestEnv, httpError, validBody } from '../helpers.js';
-import type { TestEnv } from '../helpers.js';
+import { FAKE_PAT, createTestEnv, httpError, validBody } from '@test/helpers.js';
+import type { TestEnv } from '@test/helpers.js';
 
 let env: TestEnv;
 afterEach(async () => {

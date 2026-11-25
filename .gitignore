@@ -162,9 +162,11 @@ vite.config.ts.timestamp-*
 !.env.example
 data/
 dist/
-lab-workspace/
 .lab-work/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
 .DS_Store
+
+# テスト・ツールの生成物
+.vitest/

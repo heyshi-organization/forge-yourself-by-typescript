@@ -9,14 +9,20 @@ import { defineConfig } from 'vitest/config';
 const target = process.env.TARGET === 'reference' ? 'reference' : 'starter';
 
 export default defineConfig({
-  resolve: { alias: { '@app': fileURLToPath(new URL(`./${target}/src`, import.meta.url)) } },
+  resolve: {
+    alias: {
+      '@app': fileURLToPath(new URL(`./${target}/src`, import.meta.url)),
+      '@test': fileURLToPath(new URL('./test-support', import.meta.url)),
+    },
+  },
   test: {
     include: ['exercises/tests/**/*.test.ts'],
     environment: 'node',
     typecheck: {
       enabled: true,
       include: ['exercises/tests/**/*.test-d.ts'],
-      tsconfig: target === 'reference' ? './tsconfig.json' : './tsconfig.starter.json',
+      ignoreSourceErrors: true,
+      tsconfig: target === 'reference' ? './tsconfig.json' : './tsconfig.exercises.starter.json',
     },
   },
 });

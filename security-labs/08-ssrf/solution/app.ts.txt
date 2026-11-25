@@ -1,0 +1,36 @@
+import Fastify from 'fastify';
+
+/** 取得を許可するホスト(許可リスト)。拒否リストは抜け漏れが出やすいので使わない。 */
+const ALLOWED_HOSTS = new Set(['avatars.githubusercontent.com']);
+
+function parseAllowedUrl(raw: unknown): URL | null {
+  if (typeof raw !== 'string' || raw.length > 2048) return null;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'https:') return null; // http / file / ftp などを拒否
+  if (url.username || url.password) return null; // https://許可ホスト@evil.example のような細工を拒否
+  if (url.port !== '') return null; // 想定外のポートを拒否
+  if (!ALLOWED_HOSTS.has(url.hostname)) return null; // ホスト名は完全一致(前方一致・部分一致は不可)
+  return url;
+}
+
+export function buildLabApp() {
+  const app = Fastify();
+
+  app.get('/avatar', async (req, reply) => {
+    const url = parseAllowedUrl((req.query as { url?: unknown }).url);
+    if (!url) return reply.status(400).send({ error: 'invalid url' });
+
+    // redirect: 'error' … リダイレクトで許可リスト外に誘導されるのを防ぐ
+    // signal … 応答しない相手でも、いつまでも待たない
+    const res = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(5000) });
+    const body = await res.text();
+    return { status: res.status, bytes: body.length };
+  });
+
+  return app;
+}

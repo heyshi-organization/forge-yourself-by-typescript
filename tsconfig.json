@@ -3,7 +3,13 @@
   "compilerOptions": {
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "paths": { "@app/*": ["./reference/src/*"] }
+    "paths": { "@app/*": ["./reference/src/*"], "@test/*": ["./test-support/*"] }
   },
-  "include": ["reference/**/*.ts", "exercises/**/*.ts", "scripts/**/*.ts", "vitest*.ts"]
+  "include": [
+    "reference/**/*.ts",
+    "exercises/**/*.ts",
+    "test-support/**/*.ts",
+    "scripts/**/*.ts",
+    "vitest*.ts"
+  ]
 }

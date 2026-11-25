@@ -5,6 +5,8 @@ import { SqliteRequestRepository } from './db/sqlite-request-repository.js';
 import { FakeGitHubClient } from './github/fake-github-client.js';
 import { OctokitGitHubClient } from './github/octokit-client.js';
 import type { GitHubClient } from './github/types.js';
+import type { RequestRepository } from './db/request-repository.js';
+import type { RepositoryProvisioner } from './provisioning/types.js';
 import { buildApp } from './http/app.js';
 import { createLogger } from './logging/logger.js';
 import type { AppLogger } from './logging/logger.js';
@@ -19,6 +21,8 @@ import type { IdGenerator } from './shared/ids.js';
 /** テストなどで差し替えたい依存。指定しなければ設定に従った本番用の実装を使う。 */
 export interface Overrides {
   readonly github?: GitHubClient;
+  readonly requests?: RequestRepository;
+  readonly provisioner?: RepositoryProvisioner;
   readonly logger?: AppLogger;
   readonly clock?: Clock;
   readonly ids?: IdGenerator;
@@ -28,7 +32,8 @@ export interface Overrides {
 export interface Container {
   readonly app: FastifyInstance;
   readonly service: ProvisioningService;
-  readonly db: Database.Database;
+  /** requests を差し替えた場合は SQLite を開かないので null。 */
+  readonly db: Database.Database | null;
   close(): Promise<void>;
 }
 
@@ -40,21 +45,18 @@ export interface Container {
 export function buildContainer(config: AppConfig, overrides: Overrides = {}): Container {
   const logger = overrides.logger ?? createLogger(config.logLevel);
   const clock = overrides.clock ?? systemClock;
-  const db = openDatabase(config.dbPath);
-  const requests = new SqliteRequestRepository(db);
 
-  const github =
-    overrides.github ??
-    (config.githubClient === 'fake'
-      ? new FakeGitHubClient({ clock, simulateByName: true })
-      : new OctokitGitHubClient({ token: config.githubToken ?? '' }));
+  const db = overrides.requests ? null : openDatabase(config.dbPath);
+  const requests = overrides.requests ?? new SqliteRequestRepository(db as Database.Database);
 
-  const provisioner = new ResilientProvisioner({
-    github,
-    timeoutMs: config.githubTimeoutMs,
-    retryPolicy: { maxAttempts: config.githubMaxAttempts, baseDelayMs: 500, maxDelayMs: 10_000 },
-    ...(overrides.sleep ? { sleep: overrides.sleep } : {}),
-  });
+  const provisioner =
+    overrides.provisioner ??
+    new ResilientProvisioner({
+      github: overrides.github ?? createGitHubClient(config, clock),
+      timeoutMs: config.githubTimeoutMs,
+      retryPolicy: { maxAttempts: config.githubMaxAttempts, baseDelayMs: 500, maxDelayMs: 10_000 },
+      ...(overrides.sleep ? { sleep: overrides.sleep } : {}),
+    });
 
   const service = new ProvisioningService({
     requests,
@@ -72,9 +74,15 @@ export function buildContainer(config: AppConfig, overrides: Overrides = {}): Co
     db,
     async close() {
       await app.close();
-      db.close();
+      db?.close();
     },
   };
+}
+
+function createGitHubClient(config: AppConfig, clock: Clock): GitHubClient {
+  return config.githubClient === 'fake'
+    ? new FakeGitHubClient({ clock, simulateByName: true })
+    : new OctokitGitHubClient({ token: config.githubToken ?? '' });
 }
 // @starter-else
 //| // TODO(ex06): 依存関係を組み立てる(docs/exercises/06-dependency-injection.md)

@@ -1,0 +1,23 @@
+import { randomUUID } from 'node:crypto';
+import Database from 'better-sqlite3';
+import Fastify from 'fastify';
+
+export function buildLabApp(db: Database.Database, log: (entry: object) => void = () => {}) {
+  const app = Fastify();
+
+  app.get('/requests/:id', async (req, reply) => {
+    const { id } = req.params as { id: string };
+    try {
+      const row = db.prepare('SELECT id, status FROM requests WHERE id = ?').get(id);
+      if (!row) return reply.status(404).send({ error: 'not found' });
+      return row;
+    } catch (error) {
+      // 対策: 詳細は内部ログにだけ残し、利用者には汎用メッセージと問い合わせ用IDだけを返す
+      const errorId = randomUUID();
+      log({ errorId, error });
+      return reply.status(500).send({ error: 'internal error', errorId });
+    }
+  });
+
+  return app;
+}

@@ -36,7 +36,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start:prod": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.starter.json",
-    "lint": "eslint .",
+    "lint": "eslint . --quiet",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
@@ -53,6 +53,7 @@
     "check:secrets": "node scripts/scan-secrets.mjs",
     "audit": "npm audit --omit=dev --audit-level=high",
     "lab:start": "node scripts/lab.mjs start",
+    "lab:test": "node scripts/lab.mjs test",
     "lab:verify": "node scripts/lab.mjs verify",
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run starter:check && npm run exercise:verify && npm run check:workflows && npm run check:secrets && npm run lab:verify && npm run audit"
   }

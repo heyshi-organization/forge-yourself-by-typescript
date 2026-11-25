@@ -1,0 +1,39 @@
+name: CodeQL
+
+# SAST(静的解析)。JavaScript/TypeScript のコードを解析し、結果を Security タブに登録する。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 新しい検出ルールで定期的に再解析する(毎週月曜 03:17 UTC)
+    - cron: '17 3 * * 1'
+
+permissions: {}
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: CodeQL 解析(javascript-typescript)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      security-events: write # 解析結果を Security タブへ登録するために必要
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          languages: javascript-typescript
+          build-mode: none # TypeScript はビルド不要で解析できる
+          queries: security-extended # 標準より広めのセキュリティクエリ
+      - uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          category: '/language:javascript-typescript'

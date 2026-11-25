@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { buildOpenApiDocument } from '@app/http/openapi.js';
-import { createTestEnv } from '../helpers.js';
-import type { TestEnv } from '../helpers.js';
+import { createTestEnv } from '@test/helpers.js';
+import type { TestEnv } from '@test/helpers.js';
 
 let env: TestEnv | undefined;
 afterEach(async () => {
