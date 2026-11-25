@@ -37,9 +37,12 @@ gh api -X PUT repos/<owner>/<repo>/vulnerability-alerts    # Dependabot alerts �
 **自分の fork / コピーで使うとき**: 設定画面で Dependency graph を有効にしてください(API の `PATCH` では効きませんでした)。確認は `gh api repos/<owner>/<repo>/dependency-graph/sbom` が 200 になること。有効化してから動かない場合は、失敗した run を再実行します。
 `Dependency Review` は通ることを確認できたので、`main` のブランチ保護(2-1)の必須チェックに入れてよい。
 
-## 2. 手動で設定する(未設定)
+## 2. ブランチ保護(このリポジトリでは適用済み)
 
-> ブランチ保護は、リポジトリの運用ルールを変える設定のため、**自動では変更していません**。
+> ブランチ保護はリポジトリの運用ルールを変える設定のため、利用者の承認を得てから適用した(2026-11-25)。fork / コピーでは自分で適用する。
+>
+> 事実: `POST /repos/<owner>/<repo>/rulesets` でサンプルを適用し、再取得して `enforcement: active`、ルール4種(deletion / non_fast_forward / pull_request / required_status_checks)、必須チェック5件を確認した。
+> 確認できない: 直接 push が実際に拒否される様子、必須チェックが未通過のPRのマージがブロックされる様子(あえて試していない)。
 
 ### 2-1. main ブランチの保護(Ruleset)
 
@@ -63,7 +66,7 @@ CLI で作る場合(JSON を用意):
 gh api -X POST repos/<owner>/<repo>/rulesets --input .github/rulesets/protect-main.json
 ```
 
-→ サンプル: [`.github/rulesets/protect-main.json`](../.github/rulesets/protect-main.json)(ステータスチェック名は、実際のジョブ名と合わせること。**このサンプルは、この教材の作成時には適用の動作確認をしていない=未検証**。適用前に内容を確認すること)
+→ サンプル: [`.github/rulesets/protect-main.json`](../.github/rulesets/protect-main.json)(ステータスチェック名は、実際のジョブ名と合わせること。適用と設定内容の再取得までは確認済み。ブロックの実動作は未確認。適用前に内容を確認すること)
 
 > ⚠️ 無料プランの**組織**の private リポジトリでは Ruleset / ブランチ保護が使えない場合があります(public なら使えます)。使えない場合の代替は、PR運用をルール化し、`CODEOWNERS`・レビュー習慣で補うこと。
 > この点は、**GitHub のプラン説明(Docs)で最終確認していません(未確認)**。public リポジトリである本リポジトリでの適用可否は、設定画面で確認してください。
